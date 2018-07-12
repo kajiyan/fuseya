@@ -1,5 +1,9 @@
 var MEDIA_WIKI_API_ENDPOINT = 'http://ja.wikipedia.org/w/api.php';
 
+var diffWorker = new Worker('/js/diff-worker.js');
+
+
+
 document.addEventListener('DOMContentLoaded', function() {
 	// var titles = '岩崎万次郎';
 	var titles = 'AIBO';
@@ -234,11 +238,24 @@ document.addEventListener('DOMContentLoaded', function() {
 					var text = content.text;
 					var parentText = parentContent.text;
 
-					var html = htmldiff(text, parentText);
+					var onMessage = function(e) {
+						diffWorker.removeEventListener('message', onMessage, false);
+						$('body').html(e.data);
+						goBack(parentContent);
+					};
 
-					$('body').html(html);
+					diffWorker.addEventListener('message', onMessage, false);
 
-					goBack(parentContent);
+					diffWorker.postMessage({
+						'text': text,
+						'parentText': parentText
+					});
+
+					// var html = htmldiff(text, parentText);
+
+					// $('body').html(html);
+
+					// goBack(parentContent);
 				});
 
 			})(content);
@@ -246,6 +263,14 @@ document.addEventListener('DOMContentLoaded', function() {
 		});
 	};
 
+
+// //処理結果、受信イベント
+//   worker.addEventListener('message', function(e) {
+//     $("#idParamReceive").val(e.data);
+//   }, false);
+
+//   //処理命令
+//   worker.postMessage($("#idParamPost").val());
 
 
 	getPageID(titles)
