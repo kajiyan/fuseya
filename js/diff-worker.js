@@ -278,29 +278,88 @@ consecutive_where = function(start, content, predicate) {
   return [];
 };
 
-wrap = function(tag, content) {
-  var length, non_tags, position, rendering, tags;
-  rendering = '';
-  position = 0;
-  length = content.length;
-  while (true) {
-    if (position >= length) {
-      break;
-    }
-    non_tags = consecutive_where(position, content, isnt_tag);
-    position += non_tags.length;
-    if (non_tags.length !== 0) {
-      rendering += "<" + tag + ">" + (non_tags.join('')) + "</" + tag + ">";
-    }
-    if (position >= length) {
-      break;
-    }
-    tags = consecutive_where(position, content, is_tag);
-    position += tags.length;
-    rendering += tags.join('');
-  }
-  return rendering;
+// wrap = function(tag, content) {
+// 	var length = content.length,
+// 			non_tags,
+// 			position = 0,
+// 			rendering = '',
+// 			tags;
+
+// 	while (true) {
+// 		if (position >= length) break;
+
+// 		non_tags = consecutive_where(position, content, isnt_tag);
+// 		position += non_tags.length;
+		
+// 		if (non_tags.length !== 0) {
+// 		  rendering += "<" + tag + ">" + (non_tags.join('')) + "</" + tag + ">";
+// 		}
+		
+// 		if (position >= length) break;
+		
+// 		tags = consecutive_where(position, content, is_tag);
+// 		position += tags.length;
+// 		rendering += tags.join('');
+// 	}
+
+// 	return rendering;
+// };
+
+
+insWrap = function(content) {
+	var length = content.length,
+			non_tags,
+			position = 0,
+			rendering = '',
+			tags;
+
+	while (true) {
+		if (position >= length) break;
+
+		non_tags = consecutive_where(position, content, isnt_tag);
+		position += non_tags.length;
+		
+		if (non_tags.length !== 0) {
+		  rendering += '<ins>' + (non_tags.join('')) + '</ins>';
+		}
+		
+		if (position >= length) break;
+		
+		tags = consecutive_where(position, content, is_tag);
+		position += tags.length;
+		rendering += tags.join('');
+	}
+
+	return rendering;
 };
+
+delWrap = function(content) {
+	var length = content.length,
+			non_tags,
+			position = 0,
+			rendering = '',
+			tags;
+
+	while (true) {
+		if (position >= length) break;
+
+		non_tags = consecutive_where(position, content, isnt_tag);
+		position += non_tags.length;
+		
+		if (non_tags.length !== 0) {
+		  rendering += '<del>' + (non_tags.join('')) + '</del>';
+		}
+		
+		if (position >= length) break;
+		
+		tags = consecutive_where(position, content, is_tag);
+		position += tags.length;
+		rendering += tags.join('');
+	}
+
+	return rendering;
+};
+
 
 op_map = {
   equal: function(op, before_tokens, after_tokens) {
@@ -309,12 +368,12 @@ op_map = {
   insert: function(op, before_tokens, after_tokens) {
     var val;
     val = after_tokens.slice(op.start_in_after, +op.end_in_after + 1 || 9e9);
-    return wrap('ins', val);
+    return insWrap(val);
   },
   "delete": function(op, before_tokens, after_tokens) {
     var val;
     val = before_tokens.slice(op.start_in_before, +op.end_in_before + 1 || 9e9);
-    return wrap('del', val);
+    return delWrap(val);
   }
 };
 
