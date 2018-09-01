@@ -273,11 +273,11 @@ document.addEventListener('DOMContentLoaded', function() {
 //   worker.postMessage($("#idParamPost").val());
 
 
-	getPageID(titles)
-		.then(getRevisions)
-		.then(function(result) {
-			goBackToTheFuture(result);
-		});
+	// getPageID(titles)
+	// 	.then(getRevisions)
+	// 	.then(function(result) {
+	// 		goBackToTheFuture(result);
+	// 	});
 }, false);
 
 

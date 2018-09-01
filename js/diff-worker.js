@@ -555,6 +555,6 @@ if (typeof define === 'function') {
 self.addEventListener('message', function(e) {
 	var t = (new Date()).getTime();
   var html = htmldiff(e.data.text, e.data.parentText);
-  console.log('diff complete', (new Date()).getTime() - t);
+  // console.log('diff complete', (new Date()).getTime() - t);
 	self.postMessage(html);
 }, false);
