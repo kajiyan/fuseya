@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>Exsample</title>
+
+	<!-- wikipedia 用のスタイルシートです -->
+	<link rel="stylesheet" href="//en.wikipedia.org/w/load.php?debug=false&amp;lang=ja&amp;modules=ext.categoryTree.css%7Cext.cite.styles%7Cext.uls.interlanguage%7Cext.visualEditor.desktopArticleTarget.noscript%7Cext.wikimediaBadges%7Cmediawiki.legacy.commonPrint%2Cshared%7Cmediawiki.skinning.interface%7Cskins.vector.styles&amp;only=styles&amp;skin=vector"/>
+	<link rel="stylesheet" href="//en.wikipedia.org/w/load.php?debug=false&amp;lang=ja&amp;modules=site.styles&amp;only=styles&amp;skin=vector"/>
+	<link rel="stylesheet" href="css/style.css">
+
+	<script type="text/javascript" src="./js/lib/jquery/jquery-3.3.1.min.js"></script>
+	<script type="text/javascript" src="./js/lib/TweenMax.min.js"></script>
+	<!-- jQueryより後にライブラリを読み込んでください -->
+	<!-- diff-worker.js を js ディレクトリ以下においてください -->
+	<script type="text/javascript" src="/js/wiki.js"></script>
+	<script>
+		window.onload = function() {
+			/* ------------------------------ */
+			var $wiki = $('#js-Wiki').wiki({
+				$range: $('#js-Wiki_Range'), // 再生位置のシークバー（指定しなくてもいいです）
+				$playButton: $('#js-Wiki_Button-play'), // 再生ボタン（指定しなくてもいいです）
+				$pauseButton: $('#js-Wiki_Button-pause'), // 停止ボタン（指定しなくてもいいです）
+				$timestamp: $('#js-Wiki_Timestamp')
+			});
+			// Wikipedia 管理用のインスタンスを取得
+			var wiki = $wiki.data('wiki');
+			/* ------------------------------ */
+
+			// HTML のローディングが完了した時にこの中が処理されます
+
+			// HTML から classにjs-gallery-link が指定されている要素を取得します
+			// ギャラリーのサムネイルです
+			var elGalleryLink = document.getElementsByClassName('js-gallery-link');
+			
+			// HTML から idにjs-modal-outer が指定されている要素を取得します
+			// モーダルウインドウ本体です
+			var elModalOuter = document.getElementById('js-modal-outer');
+			
+			// HTML から idにjs-modal-close が指定されている要素を取得します
+			// モーダルウインドウ内の画像です
+			var elModalImg = document.getElementById('js-modal-img');
+			
+			// HTML から idにjs-modal-close が指定されている要素を取得します
+			// モーダルウインドウを閉じるボタンです
+			var elModalClose = document.getElementById('js-modal-close');
+
+			// モーダルウインドウ内のキャプション
+			var elModalCaption = document.getElementById('js-modal-caption');
+
+
+			// js-gallery-link がクリックされた時の処理を登録しまう
+			for (var i = 0; i < elGalleryLink.length; i++) {
+				elGalleryLink[i].addEventListener('click', function(e) {
+					// js-gallery-link がクリックされた時にこの中が処理されます
+
+					// js-gallery-link はaタグなのでクリックするとデフォルトの処理でページが遷移してしまう
+					// なのでデフォルトの処理を中止する
+					e.preventDefault();
+
+					// thisはクリックされた要素を指す
+					// クリックされたjs-gallery-link に指定されているdata-indexの値を取得する
+					var index = this.dataset.index;
+
+					// キャプションを取得する
+					var caption = this.dataset.caption;
+					
+					// モーダルに表示する画像へのパスを作る
+					var src = 'images/' + index + '.png';
+
+					// モーダルウインドウ内の画像をクリックされた画像に対応する画像と入れ替えます
+					elModalImg.src = src;
+
+					// モーダルウインドウ内のキャプションをクリックされた画像に対応するキャプションと入れ替えます
+					elModalCaption.textContent = caption;
+
+					/* ------------------------------ */
+					// Wikipedia の更新履歴を取得する
+					// titles には取得する記事タイトルを取得する（この場合はcaptionにしている）
+					wiki.getRevisions({ titles: caption })
+						.done(function() {
+							// 更新履歴の取得が終わったらこの中が処理されます
+							// percentage には 0.0 〜 1.0 までの数値を指定します
+							// 0.0 が最も古い記事で、1.0 が最も新しい記事となります
+							// wiki.play();
+							wiki.playDiff({ percentage: 0.0 });
+						});
+					/* ------------------------------ */
+
+					TweenMax.to(elModalOuter, 0.4, { autoAlpha: 1.0 });
+				});
+				
+				/*var script = document.createElement("script");
+				script.src = "/js/main2.js";
+				document.body.appendChild(script);*/
+
+			}
+
+			elModalClose.addEventListener('click', function(e) {
+				e.preventDefault();
+				/* ------------------------------ */
+				// モーダルを閉じたタイミングで再生を停止する
+				wiki.pause();
+				// モーダルを閉じたタイミングでWikipediaの記事が表示されている要素をリセットする
+				wiki.clear();
+				/* ------------------------------ */
+				TweenMax.to(elModalOuter, 0.4, { autoAlpha: 0.0 });
+			});
+		};
+	</script>
+</head>
+<body>
+	<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="5464" height="768" viewBox="0 0 5464 768">
+		<g class="cls-30">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/techno" data-caption="テクノカット"><image width="352" height="392" transform="translate(318 79) scale(0.96)" xlink:href="./images/1980/techno.png"/></a>
+		</g>
+		<g class="cls-31">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/tetris" data-caption="テトリス"><image width="422" height="308" transform="translate(205 448) scale(0.96)" xlink:href="./images/1980/tetris.png"/></a>
+		</g>
+		<g class="cls-32">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/maharaja" data-caption="マハラジャ"><image width="343" height="384" transform="translate(702 41) scale(0.96)" xlink:href="./images/1980/maharaja.png"/></a>
+		</g>
+		<g class="cls-33">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/gundum" data-caption="ガンダム"><image width="195" height="256" transform="translate(198 76) scale(0.96)" xlink:href="./images/1980/gundum.png"/></a>
+		</g>
+		<g class="cls-34">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/bill" data-caption="日本銀行券"><image width="387" height="379" transform="translate(408 34) scale(0.96)" xlink:href="./images/1980/bill.png"/></a>
+		</g>
+		<g class="cls-35">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/pocari" data-caption="ポカリスエット"><image width="232" height="353" transform="translate(43 61) scale(0.96)" xlink:href="./images/1980/pocari.png"/></a>
+		</g>
+		<g class="cls-36">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/handycam" data-caption="ハンディカム"><image width="187" height="145" transform="translate(408 41) scale(0.96)" xlink:href="./images/1980/handycam.png"/></a>
+		</g>
+		<g class="cls-37">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/camera" data-caption="写ルンです"><image width="191" height="190" transform="translate(575 28) scale(0.96)" xlink:href="./images/1980/camera.png"/></a>
+		</g>
+		<g class="cls-38">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/seikocat" data-caption="聖子ちゃんカット"><image width="263" height="251" transform="translate(608 379) scale(0.96)" xlink:href="./images/1980/seikocat.png"/></a>
+		</g>
+		<g class="cls-39">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/skateboard" data-caption="スケートボード"><image width="370" height="212" transform="translate(396 482) scale(0.96)" xlink:href="./images/1980/skateboard.png"/></a>
+		</g>
+		<g class="cls-40">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/famicom" data-caption="ファミリーコンピュータ"><image width="345" height="218" transform="translate(854 30) scale(0.96)" xlink:href="./images/1980/famicom.png"/></a>
+		</g>
+		<g class="cls-41">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/nameneko" data-caption="なめ猫"><image width="240" height="250" transform="translate(1038 103) scale(0.96)" xlink:href="./images/1980/nameneko.png"/></a>
+		</g>
+		<g class="cls-42">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/disneyland" data-caption="東京ディズニーランド"><image width="239" height="336" transform="translate(1123 146) scale(0.96)" xlink:href="./images/1980/disneyland.png"/></a>
+		</g>
+		<g class="cls-43">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/mario" data-caption="マリオブラザーズ"><image width="222" height="282" transform="translate(1154 31) scale(0.96)" xlink:href="./images/1980/mario.png"/></a>
+		</g>
+		<g class="cls-44">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/heisei" data-caption="平成"><image width="268" height="195" transform="translate(1119 551) scale(0.96)" xlink:href="./images/1980/heisei.png"/></a>
+		</g>
+		<g class="cls-45">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/dome" data-caption="東京ドーム"><image width="298" height="329" transform="translate(1037 331) scale(0.96)" xlink:href="./images/1980/dome.png"/></a>
+		</g>
+		<g class="cls-46">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/bikkuri" data-caption="ビックリマン"><image width="184" height="185" transform="translate(1003 291) scale(0.96)" xlink:href="./images/1980/bikkuri.png"/></a>
+		</g>
+		<g class="cls-47">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/gb" data-caption="ゲームボーイ"><image width="172" height="198" transform="translate(1018 484) scale(0.96)" xlink:href="./images/1980/gb.png"/></a>
+		</g>
+		<g class="cls-48">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/karaoke" data-caption="カラオケ"><image width="334" height="186" transform="translate(625 546) scale(0.96)" xlink:href="./images/1980/karaoke.png"/></a>
+		</g>
+		<g class="cls-49">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/shoulderphone" data-caption="自動車電話"><image width="237" height="484" transform="translate(51 24) scale(0.96)" xlink:href="./images/1980/shoulderphone.png"/></a>
+		</g>
+		<g class="cls-50">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/coralreef" data-caption="青い珊瑚礁 (曲)"><image width="525" height="448" transform="translate(16 285) scale(0.96)" xlink:href="./images/1980/coralreef.png"/></a>
+		</g>
+		<g class="cls-51">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/madonna" data-caption="マドンナ (歌手)"><image width="131" height="162" transform="translate(32 355) scale(0.96)" xlink:href="./images/1980/madonna.png"/></a>
+		</g>
+		<g class="cls-52">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/amecasi" data-caption="アメリカンカジュアル"><image width="173" height="266" transform="translate(879 452) scale(0.96)" xlink:href="./images/1980/amecasi.png"/></a>
+		</g>
+		<g class="cls-53">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/mini4wd" data-caption="ミニ四駆"><image width="112" height="127" transform="translate(1001 479) scale(0.96)" xlink:href="./images/1980/mini4wd.png"/></a>
+		</g>
+		<g class="cls-54">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/miniskirt" data-caption="ミニスカート"><image width="435" height="306" transform="translate(628 235) scale(0.96)" xlink:href="./images/1980/miniskirt.png"/></a>
+		</g>
+		<g class="cls-55">
+			<a class="js-gallery-link gallery-link" href="#" data-index="1980/teleca" data-caption="テレホンカード"><image width="192" height="208" transform="translate(492 301) scale(0.96)" xlink:href="./images/1980/teleca.png"/></a>
+		</g>
+	</svg>
+
+
+
+	<div id="js-modal-outer" class="modal-outer">
+		<div class="modal">
+			<div class="modal-inner">
+				<div class="flex">
+					<div class="left">
+						<h2 id="js-modal-caption" class="modal-caption"></h2>
+						<div class="photo-container">
+							<img id="js-modal-img" class="modal-img" src="" alt="画像: 写真">
+						</div>
+					</div>
+					<div class="right">
+						<input id="js-Wiki_Range" type="range" value="0" max="0" min="0" step="1" name="revisions">
+						<button id="js-Wiki_Button-play" type="button">再生</button>
+						<button id="js-Wiki_Button-pause" type="button">停止</button>
+						<div id="js-Wiki_Timestamp"><!-- ここに更新日時が入ります --></div>
+						<div id="js-Wiki"><!-- ここに記事本文が入ります --></div>
+					</div>
+				</div>
+				<button id="js-modal-close" class="modal-close">×</button>
+			</div><!-- /.modal-inner --> 
+		</div><!-- /.modal --> 
+	</div><!-- /.modal-outer -->
+</body>
+</html>
