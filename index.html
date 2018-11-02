@@ -13,7 +13,39 @@
 	<!-- <script src="/js/lib/htmldiff/htmldiff.min.js" type="text/javascript" defer></script> -->
 	<!-- <script src="/js/main.js" type="text/javascript" defer></script> -->
 	<script src="/js/wiki.js" type="text/javascript" defer></script>
+	<script type="text/javascript">
+		document.addEventListener('DOMContentLoaded', function() {
+			var $wiki = $('#js-Wiki').wiki({
+				$range: $('#js-Wiki_Range'),
+				$playButton: $('#js-Wiki_Button-play'),
+				$pauseButton: $('#js-Wiki_Button-pause'),
+				$timestamp: $('#js-Wiki_Timestamp')
+			});
+
+			var wiki = $wiki.data('wiki');
+
+			wiki.getRevisions({ titles: 'AIBO' })
+				.done(function() {
+					console.log('done');
+					wiki.playDiff({ percentage: 0.0 });
+
+					/*
+					setTimeout(function() {
+						wiki.clear();
+					}, 4000);
+					*/
+				})
+				.fail(function(){
+					console.log('fail');
+				});
+		});
+	</script>
 </head>
 <body>
+	<input id="js-Wiki_Range" type="range" value="0" max="0" min="0" step="1" name="revisions">
+	<button id="js-Wiki_Button-play" type="button">再生</button>
+	<button id="js-Wiki_Button-pause" type="button">停止</button>
+	<div id="js-Wiki_Timestamp"><!-- ここに更新日時が入ります --></div>
+	<div id="js-Wiki"><!-- ここに記事本文が入ります --></div>
 </body>
 </html>
