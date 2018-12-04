@@ -33,6 +33,7 @@
 			// this._isPlaying = this.options.autoPlay ? true : false;
 
 			if (this.options.$range && this.options.$range.attr('type') === 'range') {
+				this.options.$range.on('input', this._inputRange.bind(this));
 				this.options.$range.on('change', this._changeRange.bind(this));
 			}
 
@@ -58,10 +59,12 @@
 			var revLen = this._revisions.length;
 			if (revLen < 1) return;
 
-			if (!this._isPlaying) {
-				this._isPlaying = true;
-				this.playDiff({ percentage: (revLen - (revLen - this.options.$range.val())) / revLen });
-			}
+			this.playDiff({ percentage: (revLen - (revLen - this.options.$range.val())) / revLen });
+
+			// if (!this._isPlaying) {
+			// 	this._isPlaying = true;
+			// 	this.playDiff({ percentage: (revLen - (revLen - this.options.$range.val())) / revLen });
+			// }
 		}
 
 		Wiki.prototype.pause = function() {
@@ -71,7 +74,13 @@
 			}
 		}
 
+		/**
+		 * clear
+		 * 取得した文字列をすべて削除する
+		 */
 		Wiki.prototype.clear = function() {
+			this.pause();
+
 			this._$el.html('');
 
 			if (this.options.$range && this.options.$range.attr('type') === 'range') {
@@ -81,6 +90,10 @@
 			if (this.options.$timestamp) {
 				this.options.$timestamp.text('');
 			}
+		}
+
+		Wiki.prototype._inputRange = function(e) {
+			this.pause();
 		}
 
 		Wiki.prototype._changeRange = function(e) {
@@ -181,12 +194,15 @@
 			.done(
 				(function(_this) {
 					return function (data) {
-						var revisions = []; // ページのリビジョン（更新履歴）用の変数
-						var pages = data.query.pages;
+						// 記事が存在するか
+						var pageExists = !!(data['query'] && data['query']['pages']);
 
 						// 検索結果が1件以上返ってきているか、かつ、
 						// 検索結果1件目にrevisionsが存在するか
-						if (pages.length >= 1 && data.query.pages[0].revisions) {
+						if (pageExists && data.query.pages.length >= 1 && data.query.pages[0].revisions) {
+							var revisions = []; // ページのリビジョン（更新履歴）用の変数
+							var pages = data.query.pages;
+
 							// ページのリビジョン（更新履歴）が取得できた時の処理
 							revisions = [].concat(options.revisions, data.query.pages[0].revisions);
 
@@ -216,8 +232,6 @@
 										'revisions': result.revisions
 									});
 								});
-
-
 							} else {
 								// 全てのリビジョンを取得できた場合の処理
 								// 状態をresolve にする
@@ -229,7 +243,7 @@
 							}
 						} else {
 							// ページのリビジョン（更新履歴）が取得できなかった時の処理
-							console.log(titles + ' に該当するのページIDを取得できませんでした');
+							console.log('リビジョン（更新履歴）の取得に失敗しました');
 							_this._revisions = 0;
 							defer.reject();
 						}
@@ -293,31 +307,37 @@
 			var query = $.extend(true, {}, options.query, { 'oldid': keydata.revid });
 			var defer = $.Deferred();
 
-			$.ajax({
-				'url': MEDIA_WIKI_API_ENDPOINT,
-				'type': 'GET',
-				'data': query,
-				'dataType': 'jsonp',
-				'jsonpCallback': (function () {
-					var callback = $.noop;
-					return 'callback';
-				})()
-			})
-			.done(function (data) {
-				console.log('Revision ID:' + keydata.revid + ' のHTMLを取得しました');
+			(function(_this) {
+				$.ajax({
+					'url': MEDIA_WIKI_API_ENDPOINT,
+					'type': 'GET',
+					'data': query,
+					'dataType': 'jsonp',
+					'jsonpCallback': (function () {
+						var callback = $.noop;
+						return 'callback';
+					})()
+				})
+				.done(function (data) {
+					if (_this._isPlaying) {
+						console.log('Revision ID:' + keydata.revid + ' のHTMLを取得しました');
 
-				var result = {};
+						var result = {};
 
-				result.pageid = data.parse.pageid;
-				result.revid = data.parse.pageid;
-				result.text = data.parse.text;
-				result.timestamp = keydata.timestamp;
+						result.pageid = data.parse.pageid;
+						result.revid = data.parse.pageid;
+						result.text = data.parse.text;
+						result.timestamp = keydata.timestamp;
 
-				defer.resolve(result);
-			})
-			.fail(function (error) {
-				defer.reject(error);
-			});
+						defer.resolve(result);
+					} else {
+						defer.reject();
+					}
+				})
+				.fail(function (error) {
+					defer.reject(error);
+				});
+			})(this);
 
 			return defer.promise();
 		}
@@ -333,8 +353,6 @@
 
 			var revisionIndex = Math.round((this._revisions.length - 1) * (1 - keydata.percentage));
 			var revision = this._revisions[revisionIndex];
-
-			console.log(revision);
 
 			(function(_this) {
 				_this.getContent(revision)
@@ -364,74 +382,76 @@
 		 * playDiff
 		 */
 		Wiki.prototype.playDiff = function(keydata) {
+			console.log(keydata);
+
 			var defer = $.Deferred();
 
 			if (this._revisions.length < 1 && keydata.percentage >= 0 && keydata.percentage <= 1) defer.reject();
 
-			var revisionIndex = Math.round((this._revisions.length - 1) * (1 - keydata.percentage));
-			var revision = this._revisions[revisionIndex];
-			
-			(function(_this) {
-				_this.getContent(revision)
-					.then(
-						function(content) {
-							return (function goFuture(content) {
-								--revisionIndex;
-								if (!(revisionIndex > -1)) {
-									_this._isPlaying = false;
-									return;
-								}
+			if (!this._isPlaying) {
+				this._isPlaying = true;
 
-								var parentRevisionIndex = revisionIndex;
-								var parentRevision = _this._revisions[parentRevisionIndex];
+				var revisionIndex = Math.round((this._revisions.length - 1) * (1 - keydata.percentage));
+				var revision = this._revisions[revisionIndex];
+				
+				(function(_this) {
+					_this.getContent(revision)
+						.then(
+							function(content) {
+								return (function goFuture(content) {
+									--revisionIndex;
+									if (!(revisionIndex > -1)) {
+										_this._isPlaying = false;
+										return;
+									}
 
-								_this.getContent(parentRevision)
-									.then(
-										function(parentContent) {
-											var text = content.text;
-											var parentText = parentContent.text;
+									var parentRevisionIndex = revisionIndex;
+									var parentRevision = _this._revisions[parentRevisionIndex];
 
-											var onMessage = function(e) {
-												diffWorker.removeEventListener('message', onMessage, false);
-												_this._$el.html(e.data);
+									_this.getContent(parentRevision)
+										.then(
+											function(parentContent) {
+												var text = content.text;
+												var parentText = parentContent.text;
 
-												// オプションにレンジがあれば値を設定する
-												if (_this.options.$range && _this.options.$range.attr('type') === 'range') {
-													_this.options.$range.val(_this._revisions.length - parentRevisionIndex);
-												}
+												var onMessage = function(e) {
+													diffWorker.removeEventListener('message', onMessage, false);
+													_this._$el.html(e.data);
 
-												// 更新日時を反映する
-												if (_this.options.$timestamp) {
-													_this.options.$timestamp.text(parentContent.timestamp);
-												}
+													// オプションにレンジがあれば値を設定する
+													if (_this.options.$range && _this.options.$range.attr('type') === 'range') {
+														_this.options.$range.val(_this._revisions.length - parentRevisionIndex);
+													}
 
-												_this._timer = setTimeout(function() {
-													goFuture(parentContent);
-												}, 1000);
+													// 更新日時を反映する
+													if (_this.options.$timestamp) {
+														_this.options.$timestamp.text(parentContent.timestamp);
+													}
+													
+													_this._timer = setTimeout(function() {
+														goFuture(parentContent);
+													}, 1000);
+												};
 
-												_this._isPlaying = true;
-												// if (_this._isPlaying) {
-												// }
-											};
+												diffWorker.addEventListener('message', onMessage, false);
 
-											diffWorker.addEventListener('message', onMessage, false);
-
-											diffWorker.postMessage({
-												'text': text,
-												'parentText': parentText
-											});
-										},
-										function(error) {
-											defer.reject(error);
-										}
-									);
-							})(content);
-						},
-						function(error) {
-							defer.reject(error);
-						}
-					)
-			})(this);
+												diffWorker.postMessage({
+													'text': text,
+													'parentText': parentText
+												});
+											},
+											function(error) {
+												defer.reject(error);
+											}
+										);
+								})(content);
+							},
+							function(error) {
+								defer.reject(error);
+							}
+						)
+				})(this);
+			}
 		}
 
 
