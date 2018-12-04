@@ -1,2 +1,2 @@
 # fuseya
-cp 0
+cp 1
